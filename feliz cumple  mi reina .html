@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Feliz Cumpleaños, Princesa hermosa! ✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400&family=Poppins:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #fff0f5, #fae8ff, #f3e8ff, #fff5f7);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+            color: #3d344d;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .font-cursive { font-family: 'Great Vibes', cursive; }
+
+        /* Floating animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+        @keyframes balloonFloat {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.85; }
+            90% { opacity: 0.85; }
+            100% { transform: translateY(-20vh) rotate(15deg); opacity: 0; }
+        }
+        @keyframes flameFlicker {
+            0%, 100% { transform: scale(1) rotate(-2deg); opacity: 0.95; filter: drop-shadow(0 0 12px #f59e0b); }
+            50% { transform: scale(1.15) rotate(2deg); opacity: 1; filter: drop-shadow(0 0 20px #ef4444); }
+        }
+
+        .animate-float { animation: floatSlow 4.5s ease-in-out infinite; }
+        .flame-anim { animation: flameFlicker 0.5s ease-in-out infinite alternate; transform-origin: bottom center; }
+
+        /* 3D Gift Box */
+        .gift-scene { perspective: 1000px; }
+        .gift-container {
+            position: relative;
+            width: 220px;
+            height: 200px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .gift-container:hover { transform: scale(1.05) rotateY(10deg); }
+        
+        .gift-lid-wrapper {
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            right: -10px;
+            height: 50px;
+            z-index: 20;
+            transform-origin: top center;
+            transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1), top 0.9s ease;
+        }
+        .gift-container.open .gift-lid-wrapper {
+            transform: rotateX(-120deg) translateY(-50px) translateZ(40px);
+            top: -60px;
+        }
+
+        /* 3D Flip Card */
+        .perspective-1000 { perspective: 1000px; }
+        .card-inner {
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back { 
+            -webkit-backface-visibility: hidden; 
+            backface-visibility: hidden; 
+        }
+        .card-back { transform: rotateY(180deg); }
+
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff0f5; }
+        ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 4px; }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col items-center justify-between selection:bg-pink-300 selection:text-pink-900">
+
+    <canvas id="magicCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- Floating 3D Balloon Background Layer -->
+    <div id="balloonContainer" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <!-- Music Toggle Floating Button -->
+    <button id="musicToggleBtn" class="fixed top-5 right-5 z-40 bg-white/80 backdrop-blur-md border border-pink-200 p-3.5 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-pink-600">
+        <span id="musicIcon" class="text-xl">🎵</span>
+    </button>
+
+    <!-- Welcome Modal Overlay -->
+    <div id="welcomeOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-opacity duration-700">
+        <div class="bg-white/95 backdrop-blur-2xl p-8 md:p-10 rounded-3xl shadow-2xl max-w-md text-center border border-pink-200 animate-float">
+            <div class="text-6xl mb-4 animate-bounce">👑✨</div>
+            <h1 class="font-playfair text-3xl font-bold text-pink-600 mb-2">¡Un Momento Mágico!</h1>
+            <p class="text-gray-600 text-sm mb-6 leading-relaxed">
+                Diseñado exclusivamente para la cumpleañera más especial de mi vida.
+            </p>
+            <button id="startBtn" class="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 text-white font-semibold py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-pink-400/50 hover:scale-105 active:scale-95 transition-all text-base flex items-center justify-center gap-2">
+                <span>✨ Iniciar la Celebración ✨</span>
+            </button>
+        </div>
+    </div>
+
+    <header class="w-full max-w-4xl p-6 flex flex-wrap justify-center gap-3 z-10">
+        <span class="bg-white/80 backdrop-blur-md border border-pink-200 text-pink-600 px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm animate-float">
+            💖 La Cumpleañera Más Hermosa
+        </span>
+        <span class="bg-white/80 backdrop-blur-md border border-purple-200 text-purple-600 px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm animate-float" style="animation-delay: 1s;">
+            👑 Reina De Hoy Y Siempre
+        </span>
+        <span class="bg-white/80 backdrop-blur-md border border-amber-200 text-amber-600 px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm animate-float" style="animation-delay: 2s;">
+            ✨ Llena De Luz Y Magia
+        </span>
+    </header>
+
+    <main class="w-full max-w-4xl px-4 py-6 flex flex-col items-center gap-16 z-10">
+
+        <!-- Title Section -->
+        <section class="text-center space-y-3">
+            <h1 class="font-playfair text-5xl md:text-7xl font-extrabold bg-gradient-to-r from-pink-600 via-purple-600 to-amber-500 bg-clip-text text-transparent leading-tight pb-1">
+                ¡Feliz Cumpleaños!
+            </h1>
+            <p class="font-cursive text-3xl md:text-4xl text-pink-500 font-light">
+                Que tu día brille tan lindo como tu sonrisa
+            </p>
+        </section>
+
+        <!-- ARTISANAL PERFECT SVG 3D CAKE SECTION -->
+        <section class="w-full bg-white/70 backdrop-blur-xl border border-pink-100 rounded-3xl p-8 md:p-12 shadow-2xl flex flex-col items-center relative overflow-hidden">
+            <div class="text-center mb-6 z-10">
+                <h2 class="font-playfair text-2xl md:text-3xl font-semibold text-pink-700">El Pastel de Cumpleaños</h2>
+                <p class="text-xs md:text-sm text-gray-500 mt-1">Haz clic en las velas para apagarlas o usa el botón mágico</p>
+            </div>
+
+            <!-- Precision SVG Cake Container -->
+            <div class="relative w-80 h-80 flex items-center justify-center my-2 select-none">
+                <svg viewBox="0 0 500 500" class="w-full h-full drop-shadow-2xl">
+                    <defs>
+                        <!-- Gradients -->
+                        <radialGradient id="plateShadow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="rgba(0,0,0,0.15)"/>
+                            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                        </radialGradient>
+                        <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#f1f5f9"/>
+                            <stop offset="50%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#cbd5e1"/>
+                        </linearGradient>
+                        <linearGradient id="tierBottom" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#f472b6"/>
+                            <stop offset="50%" stop-color="#f43f5e"/>
+                            <stop offset="100%" stop-color="#be185d"/>
+                        </linearGradient>
+                        <linearGradient id="tierMiddle" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#fbcfe8"/>
+                            <stop offset="50%" stop-color="#f472b6"/>
+                            <stop offset="100%" stop-color="#db2777"/>
+                        </linearGradient>
+                        <linearGradient id="tierTop" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#e9d5ff"/>
+                            <stop offset="50%" stop-color="#c084fc"/>
+                            <stop offset="100%" stop-color="#9333ea"/>
+                        </linearGradient>
+                        <linearGradient id="creamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#fff1f2"/>
+                        </linearGradient>
+                        <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#fbbf24"/>
+                            <stop offset="50%" stop-color="#fef08a"/>
+                            <stop offset="100%" stop-color="#f59e0b"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Base Shadow & Plate -->
+                    <ellipse cx="250" cy="440" rx="210" ry="25" fill="url(#plateShadow)"/>
+                    <ellipse cx="250" cy="430" rx="200" ry="22" fill="url(#plateGrad)" stroke="#e2e8f0" stroke-width="3"/>
+                    <ellipse cx="250" cy="425" rx="180" ry="18" fill="none" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="6,6"/>
+
+                    <!-- TIER 1 (Bottom Tier) -->
+                    <g id="bottomTier">
+                        <!-- Cake Body -->
+                        <path d="M 80 340 Q 250 375 420 340 L 420 410 Q 250 445 80 410 Z" fill="url(#tierBottom)"/>
+                        <ellipse cx="250" cy="340" rx="170" ry="30" fill="#f43f5e"/>
+                        <!-- Gold Pearl Trim -->
+                        <g fill="url(#goldRibbon)">
+                            <circle cx="100" cy="413" r="5"/><circle cx="130" cy="418" r="5"/><circle cx="160" cy="422" r="5"/>
+                            <circle cx="190" cy="424" r="5"/><circle cx="220" cy="425" r="5"/><circle cx="250" cy="425" r="5"/>
+                            <circle cx="280" cy="425" r="5"/><circle cx="310" cy="424" r="5"/><circle cx="340" cy="422" r="5"/>
+                            <circle cx="370" cy="418" r="5"/><circle cx="400" cy="413" r="5"/>
+                        </g>
+                        <!-- Dripping Cream Top Layer 1 -->
+                        <path d="M 80 340 Q 110 375 130 350 Q 160 380 190 355 Q 220 385 250 355 Q 280 385 310 355 Q 340 380 370 350 Q 390 375 420 340 Q 250 315 80 340 Z" fill="url(#creamGrad)"/>
+                    </g>
+
+                    <!-- TIER 2 (Middle Tier) -->
+                    <g id="middleTier">
+                        <!-- Cake Body -->
+                        <path d="M 120 260 Q 250 290 380 260 L 380 325 Q 250 355 120 325 Z" fill="url(#tierMiddle)"/>
+                        <ellipse cx="250" cy="260" rx="130" ry="22" fill="#f472b6"/>
+                        <!-- Dripping Cream Top Layer 2 -->
+                        <path d="M 120 260 Q 150 288 180 270 Q 210 295 250 272 Q 290 295 320 270 Q 350 288 380 260 Q 250 240 120 260 Z" fill="url(#creamGrad)"/>
+                    </g>
+
+                    <!-- TIER 3 (Top Tier) -->
+                    <g id="topTier">
+                        <!-- Cake Body -->
+                        <path d="M 160 180 Q 250 205 340 180 L 340 245 Q 250 270 160 245 Z" fill="url(#tierTop)"/>
+                        <ellipse cx="250" cy="180" rx="90" ry="18" fill="#c084fc"/>
+                        <!-- Dripping Cream Top Layer 3 -->
+                        <path d="M 160 180 Q 185 202 210 188 Q 235 208 260 188 Q 285 208 310 188 Q 325 202 340 180 Q 250 165 160 180 Z" fill="url(#creamGrad)"/>
+                    </g>
+
+                    <!-- TOP DECORATIONS (Strawberries, Cherries & Mint) -->
+                    <g id="toppingDecorations">
+                        <!-- Strawberry Left -->
+                        <path d="M 190 165 C 180 150 200 135 205 155 C 210 135 230 150 220 165 C 210 175 200 175 190 165 Z" fill="#ef4444"/>
+                        <circle cx="200" cy="155" r="1" fill="#fef08a"/><circle cx="210" cy="160" r="1" fill="#fef08a"/>
+                        <path d="M 200 148 Q 205 142 210 148 Q 205 145 200 148" fill="#22c55e"/>
+
+                        <!-- Strawberry Right -->
+                        <path d="M 280 165 C 270 150 290 135 295 155 C 300 135 320 150 310 165 C 300 175 290 175 280 165 Z" fill="#ef4444"/>
+                        <circle cx="290" cy="155" r="1" fill="#fef08a"/><circle cx="300" cy="160" r="1" fill="#fef08a"/>
+                        <path d="M 290 148 Q 295 142 300 148 Q 295 145 290 148" fill="#22c55e"/>
+
+                        <!-- Cherry Center -->
+                        <circle cx="250" cy="158" r="12" fill="#dc2626"/>
+                        <path d="M 250 146 Q 260 130 268 132" stroke="#15803d" stroke-width="2.5" fill="none"/>
+                    </g>
+                </svg>
+
+                <!-- CANDLES INTERACTIVE OVERLAY -->
+                <!-- Candle 1 (Left) -->
+                <div class="candle-item absolute top-[18%] left-[37%] cursor-pointer flex flex-col items-center group" data-id="1">
+                    <div class="flame-wrapper relative">
+                        <div class="flame flame-anim w-4 h-6 bg-gradient-to-t from-red-500 via-amber-400 to-yellow-100 rounded-full rounded-tr-none rotate-45"></div>
+                    </div>
+                    <div class="w-3 h-12 bg-gradient-to-r from-blue-300 via-pink-300 to-blue-200 rounded-sm shadow-sm border-t border-white"></div>
+                </div>
+
+                <!-- Candle 2 (Center) -->
+                <div class="candle-item absolute top-[14%] left-[48%] cursor-pointer flex flex-col items-center group" data-id="2">
+                    <div class="flame-wrapper relative">
+                        <div class="flame flame-anim w-4 h-6 bg-gradient-to-t from-red-500 via-amber-400 to-yellow-100 rounded-full rounded-tr-none rotate-45" style="animation-delay: 0.15s;"></div>
+                    </div>
+                    <div class="w-3 h-14 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-200 rounded-sm shadow-sm border-t border-white"></div>
+                </div>
+
+                <!-- Candle 3 (Right) -->
+                <div class="candle-item absolute top-[18%] left-[59%] cursor-pointer flex flex-col items-center group" data-id="3">
+                    <div class="flame-wrapper relative">
+                        <div class="flame flame-anim w-4 h-6 bg-gradient-to-t from-red-500 via-amber-400 to-yellow-100 rounded-full rounded-tr-none rotate-45" style="animation-delay: 0.3s;"></div>
+                    </div>
+                    <div class="w-3 h-12 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-200 rounded-sm shadow-sm border-t border-white"></div>
+                </div>
+            </div>
+
+            <!-- Cake Controls -->
+            <div id="cakeStatusMsg" class="mt-2 text-center text-pink-600 font-medium text-sm min-h-[28px] z-10">
+                🕯️ Toca cada velita o pulsa el botón para pedir tu deseo.
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-4 z-10">
+                <button id="blowCandlesBtn" class="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-semibold py-2.5 px-6 rounded-2xl shadow-lg hover:shadow-pink-300/60 hover:scale-105 active:scale-95 transition-all text-sm flex items-center gap-2">
+                    <span>💨 Soplar las Velas</span>
+                </button>
+                <button id="relightBtn" class="bg-white/80 border border-pink-200 text-pink-600 font-semibold py-2.5 px-5 rounded-2xl shadow-sm hover:bg-pink-50 transition-all text-sm hidden">
+                    ✨ Volver a Encender
+                </button>
+            </div>
+        </section>
+
+        <section class="w-full flex flex-col items-center">
+            <div class="text-center mb-6">
+                <h2 class="font-playfair text-2xl md:text-3xl font-semibold text-pink-700">Tu Regalo Especial</h2>
+                <p class="text-xs md:text-sm text-gray-500 mt-1"></p>
+            </div>
+
+            <div class="gift-scene py-6">
+                <div id="giftBox" class="gift-container">
+                    <!-- Lid with Bow -->
+                    <div class="gift-lid-wrapper">
+                        <!-- Gift Lid Main -->
+                        <div class="w-full h-full bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 rounded-xl shadow-lg border border-pink-300/40 relative">
+                            <!-- Ribbon Cross Lid -->
+                            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 shadow-sm"></div>
+                            <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-4 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-400 shadow-sm"></div>
+                        </div>
+                        <!-- Ribbon Bow Top -->
+                        <div class="absolute -top-7 left-1/2 -translate-x-1/2 w-20 h-10 pointer-events-none">
+                            <div class="absolute left-0 w-10 h-8 rounded-full border-2 border-amber-300 bg-gradient-to-br from-amber-300 to-yellow-500 shadow-md transform -rotate-45"></div>
+                            <div class="absolute right-0 w-10 h-8 rounded-full border-2 border-amber-300 bg-gradient-to-br from-amber-300 to-yellow-500 shadow-md transform rotate-45"></div>
+                            <div class="absolute left-1/2 top-2 -translate-x-1/2 w-5 h-5 rounded-full bg-yellow-200 border border-amber-400 shadow-inner"></div>
+                        </div>
+                    </div>
+
+                    <!-- Box Body -->
+                    <div class="w-full h-full bg-gradient-to-br from-pink-400 via-rose-500 to-purple-600 rounded-2xl shadow-2xl relative overflow-hidden border border-pink-200">
+                        <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-gradient-to-b from-amber-300 via-yellow-300 to-amber-400 shadow-md"></div>
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-8 bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 shadow-md"></div>
+                        <div class="absolute inset-0 bg-black/10"></div>
+                        <div class="absolute inset-x-0 bottom-4 flex justify-center z-10">
+                            <span class="bg-white/90 backdrop-blur-md px-4 py-1 rounded-full text-[11px] font-bold text-pink-600 shadow-md animate-pulse">
+                                🎁 Toca para abrir
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Secret Letter Modal / Card -->
+            <div id="secretLetter" class="hidden w-full max-w-2xl mt-4 bg-white/90 backdrop-blur-2xl border border-pink-200 p-8 md:p-10 rounded-3xl shadow-2xl relative transition-all duration-700 opacity-0 translate-y-6">
+                <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-1.5 rounded-full shadow-md text-xs font-bold uppercase tracking-wider">
+                    ✨ Mensaje Especial ✨
+                </div>
+                <div id="typingText" class="font-playfair text-base md:text-lg text-gray-700 leading-relaxed min-h-[160px] whitespace-pre-line text-left"></div>
+                <div class="mt-6 pt-4 border-t border-pink-100 flex justify-between items-center text-xs text-gray-400">
+                    <span class="font-cursive text-xl text-pink-500">Con todo mi cariño 💖</span>
+                    <button id="replayTyping" class="text-pink-600 hover:underline font-semibold">Volver a leer ✍️</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="w-full space-y-6">
+            <div class="text-center">
+                <h2 class="font-playfair text-2xl md:text-3xl font-semibold text-pink-700">Deseos Para Tu Día</h2>
+                <p class="text-xs md:text-sm text-gray-500 mt-1">Haz clic en cada tarjeta para voltearla</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="perspective-1000 h-48 cursor-pointer flip-card">
+                    <div class="card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <div class="card-front absolute inset-0 bg-white/80 border border-pink-100 rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+                            <span class="text-4xl mb-2">💖</span>
+                            <h3 class="font-playfair font-bold text-base text-pink-600">Amor e Ilusión</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-medium"></p>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-2xl flex items-center justify-center p-6 text-center shadow-inner">
+                            <p class="text-xs font-medium leading-relaxed">Que cada día de este año nuevo esté lleno de sonrisas, abrazos y momentos hermosos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="perspective-1000 h-48 cursor-pointer flip-card">
+                    <div class="card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <div class="card-front absolute inset-0 bg-white/80 border border-pink-100 rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+                            <span class="text-4xl mb-2">⭐</span>
+                            <h3 class="font-playfair font-bold text-base text-purple-600">Sueños Cumplidos</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-medium"></p>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl flex items-center justify-center p-6 text-center shadow-inner">
+                            <p class="text-xs font-medium leading-relaxed">Que nunca te falte la valentía para alcanzar todo lo que tu corazón anhela.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="perspective-1000 h-48 cursor-pointer flip-card sm:col-span-2 md:col-span-1">
+                    <div class="card-inner relative w-full h-full rounded-2xl shadow-xl">
+                        <div class="card-front absolute inset-0 bg-white/80 border border-pink-100 rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+                            <span class="text-4xl mb-2">👑</span>
+                            <h3 class="font-playfair font-bold text-base text-amber-600">Tu Luz Única</h3>
+                            <p class="text-[10px] text-gray-400 mt-2 font-medium"></p>
+                        </div>
+                        <div class="card-back absolute inset-0 bg-gradient-to-br from-amber-500 to-pink-500 text-white rounded-2xl flex items-center justify-center p-6 text-center shadow-inner">
+                            <p class="text-xs font-medium leading-relaxed">Nunca olvides lo especial, talentosa y bonita que eres.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-6 text-center text-xs text-gray-500 z-10 border-t border-pink-100/60 bg-white/40 backdrop-blur-md">
+        Diseñado con amor y mucho cariño para la cumpleañera más especial en mi vida.                        ATT:  S👻 ... EL AMOR DE TU VIDA🥰👻😘
+    </footer>
+
+    <script>
+        // --- 1. CANVAS PARTICLES & FIREWORKS ENGINE ---
+        const canvas = document.getElementById('magicCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = [];
+        const fireworks = [];
+
+        class Particle {
+            constructor(x, y, color, size, speedX, speedY, alphaDecay = 0.015) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = size;
+                this.speedX = speedX;
+                this.speedY = speedY;
+                this.alpha = 1;
+                this.decay = alphaDecay;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Ambient floating stars
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 2.5 + 1,
+                color: Math.random() > 0.5 ? '#f472b6' : '#fbbf24',
+                speedX: (Math.random() - 0.5) * 0.4,
+                speedY: (Math.random() - 0.5) * 0.4
+            });
+        }
+
+        function createExplosion(x, y, count = 30) {
+            const colors = ['#f472b6', '#c084fc', '#fbbf24', '#ec4899', '#38bdf8', '#ffffff'];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 1.5;
+                fireworks.push(new Particle(
+                    x, y,
+                    colors[Math.floor(Math.random() * colors.length)],
+                    Math.random() * 4 + 2,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    Math.random() * 0.015 + 0.008
+                ));
+            }
+        }
+
+        window.addEventListener('click', (e) => {
+            // Only trigger if click is outside interactive controls
+            if (!e.target.closest('button') && !e.target.closest('.gift-container') && !e.target.closest('.candle-item')) {
+                createExplosion(e.clientX, e.clientY, 15);
+            }
+        });
+
+        function renderCanvas() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Ambient background particles
+            particles.forEach((p) => {
+                p.x += p.speedX;
+                p.y += p.speedY;
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Fireworks/Explosions
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                const fw = fireworks[i];
+                fw.update();
+                fw.draw();
+                if (fw.alpha <= 0) fireworks.splice(i, 1);
+            }
+
+            requestAnimationFrame(renderCanvas);
+        }
+        renderCanvas();
+
+        // --- 2. FLOATING 3D BALLOONS ---
+        const balloonContainer = document.getElementById('balloonContainer');
+        const balloonColors = [
+            'linear-gradient(135deg, #f472b6 0%, #db2777 100%)',
+            'linear-gradient(135deg, #c084fc 0%, #9333ea 100%)',
+            'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+            'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)'
+        ];
+
+        function createBalloon() {
+            const balloon = document.createElement('div');
+            balloon.className = 'absolute w-12 h-16 rounded-full shadow-lg';
+            balloon.style.background = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+            balloon.style.left = Math.random() * 90 + 'vw';
+            balloon.style.animation = `balloonFloat ${Math.random() * 6 + 10}s linear forwards`;
+            
+            // String attachment
+            const string = document.createElement('div');
+            string.className = 'absolute top-full left-1/2 w-0.5 h-12 bg-gray-300/60 -translate-x-1/2';
+            balloon.appendChild(string);
+
+            balloonContainer.appendChild(balloon);
+
+            setTimeout(() => balloon.remove(), 16000);
+        }
+
+        setInterval(createBalloon, 2200);
+
+        // --- 3. WEB AUDIO MELODY SYNTHESIZER ---
+        let audioCtx = null;
+        let isMusicPlaying = false;
+        let musicInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        const happyBirthdayNotes = [
+            { freq: 261.63, duration: 0.35 }, { freq: 261.63, duration: 0.2 },
+            { freq: 293.66, duration: 0.5 },  { freq: 261.63, duration: 0.5 },
+            { freq: 349.23, duration: 0.5 },  { freq: 329.63, duration: 0.9 },
+
+            { freq: 261.63, duration: 0.35 }, { freq: 261.63, duration: 0.2 },
+            { freq: 293.66, duration: 0.5 },  { freq: 261.63, duration: 0.5 },
+            { freq: 392.00, duration: 0.5 },  { freq: 349.23, duration: 0.9 },
+
+            { freq: 261.63, duration: 0.35 }, { freq: 261.63, duration: 0.2 },
+            { freq: 523.25, duration: 0.5 },  { freq: 440.00, duration: 0.5 },
+            { freq: 349.23, duration: 0.5 },  { freq: 329.63, duration: 0.5 },
+            { freq: 293.66, duration: 0.8 }
+        ];
+
+        function playMelodySequence() {
+            if (!audioCtx || !isMusicPlaying) return;
+
+            let now = audioCtx.currentTime + 0.1;
+            happyBirthdayNotes.forEach((note) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(note.freq, now);
+
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + note.duration - 0.05);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + note.duration);
+
+                now += note.duration + 0.08;
+            });
+        }
+
+        const musicToggleBtn = document.getElementById('musicToggleBtn');
+        const musicIcon = document.getElementById('musicIcon');
+
+        function toggleMusic() {
+            initAudio();
+            isMusicPlaying = !isMusicPlaying;
+            if (isMusicPlaying) {
+                musicIcon.textContent = '🔊';
+                playMelodySequence();
+                musicInterval = setInterval(playMelodySequence, 11000);
+            } else {
+                musicIcon.textContent = '🎵';
+                if (musicInterval) clearInterval(musicInterval);
+            }
+        }
+
+        musicToggleBtn.addEventListener('click', toggleMusic);
+
+        // --- 4. WELCOME MODAL OVERLAY ---
+        const startBtn = document.getElementById('startBtn');
+        const welcomeOverlay = document.getElementById('welcomeOverlay');
+
+        startBtn.addEventListener('click', () => {
+            initAudio();
+            toggleMusic();
+            welcomeOverlay.classList.add('opacity-0');
+            setTimeout(() => welcomeOverlay.style.display = 'none', 700);
+
+            // Initial celebration fireworks
+            createExplosion(window.innerWidth / 2, window.innerHeight / 3, 40);
+        });
+
+        // --- 5. CANDLES INTERACTIVE LOGIC ---
+        const candleItems = document.querySelectorAll('.candle-item');
+        const cakeStatusMsg = document.getElementById('cakeStatusMsg');
+        const blowCandlesBtn = document.getElementById('blowCandlesBtn');
+        const relightBtn = document.getElementById('relightBtn');
+        let unlitCandles = candleItems.length;
+
+        function blowOutCandle(item) {
+            const flame = item.querySelector('.flame-wrapper');
+            if (flame && flame.style.display !== 'none') {
+                flame.style.display = 'none';
+                unlitCandles--;
+
+                // Sound effect for candle blowout
+                if (audioCtx) {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.frequency.setValueAtTime(300 - unlitCandles * 50, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                }
+
+                if (unlitCandles === 0) {
+                    cakeStatusMsg.innerHTML = '🎉 ¡Felicidades! Que todos tus deseos se cumplan ✨🎂';
+                    blowCandlesBtn.classList.add('hidden');
+                    relightBtn.classList.remove('hidden');
+
+                    // Big celebratory confetti burst
+                    const rect = item.getBoundingClientRect();
+                    createExplosion(rect.left, rect.top, 50);
+                    createExplosion(window.innerWidth / 2, window.innerHeight / 3, 50);
+                } else {
+                    cakeStatusMsg.innerHTML = `¡Quedan ${unlitCandles} velitas por apagar! 🕯️`;
+                }
+            }
+        }
+
+        candleItems.forEach((item) => {
+            item.addEventListener('click', () => blowOutCandle(item));
+        });
+
+        blowCandlesBtn.addEventListener('click', () => {
+            candleItems.forEach((item, index) => {
+                setTimeout(() => blowOutCandle(item), index * 250);
+            });
+        });
+
+        relightBtn.addEventListener('click', () => {
+            candleItems.forEach((item) => {
+                const flame = item.querySelector('.flame-wrapper');
+                if (flame) flame.style.display = 'block';
+            });
+            unlitCandles = candleItems.length;
+            cakeStatusMsg.innerHTML = '🕯️ Toca cada velita o pulsa el botón para pedir tu deseo.';
+            relightBtn.classList.add('hidden');
+            blowCandlesBtn.classList.remove('hidden');
+        });
+
+        // --- 6. GIFT BOX & TYPING LETTER LOGIC ---
+        const giftBox = document.getElementById('giftBox');
+        const secretLetter = document.getElementById('secretLetter');
+        const typingTextElem = document.getElementById('typingText');
+        const replayTypingBtn = document.getElementById('replayTyping');
+
+        const sweetMessage = `¡Feliz, feliz cumpleaños! 🌸✨
+
+🎉🎊Hoy el universo celebra la existencia de alguien profundamente maravillosa❤🥰. Tu sonrisa 😁 tiene el don de iluminar los días de quienes te rodean✨, y tu bondad 🤍 hace que el mundo sea un lugar más lindo😍.
+
+Deseo de todo corazón ❤ que este dia esté repleto de alegrías y que goses de sueños, salud y momentos inolvidables. 👉👈Nunca olvides lo valiosa, única y genial que eres.❤🥰👻
+recuerda que te amo y siempre estare a tu lado, incluso si no puedo, no olvides que lo maravillosa que eres y que puedes con todo.
+
+¡Disfruta tu día al máximo mi cielo! 🎂💖`;
+
+        let isGiftOpen = false;
+
+        function typeWriterEffect(text, index = 0) {
+            if (index === 0) typingTextElem.innerHTML = '';
+            if (index < text.length) {
+                typingTextElem.innerHTML += text.charAt(index);
+                setTimeout(() => typeWriterEffect(text, index + 1), 22);
+            }
+        }
+
+        giftBox.addEventListener('click', () => {
+            if (!isGiftOpen) {
+                isGiftOpen = true;
+                giftBox.classList.add('open');
+
+                const rect = giftBox.getBoundingClientRect();
+                createExplosion(rect.left + rect.width / 2, rect.top, 35);
+
+                setTimeout(() => {
+                    secretLetter.classList.remove('hidden');
+                    setTimeout(() => {
+                        secretLetter.classList.remove('opacity-0', 'translate-y-6');
+                        typeWriterEffect(sweetMessage);
+                    }, 50);
+                }, 500);
+            }
+        });
+
+        replayTypingBtn.addEventListener('click', () => {
+            typeWriterEffect(sweetMessage);
+        });
+
+        // --- 7. FLIP CARDS ---
+        document.querySelectorAll('.flip-card').forEach((card) => {
+            card.addEventListener('click', () => {
+                const inner = card.querySelector('.card-inner');
+                inner.classList.toggle('flipped');
+            });
+        });
+    </script>
+</body>
+</html>
